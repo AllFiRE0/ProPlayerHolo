@@ -25,8 +25,8 @@ public class PlayerDisplayManager {
         removeDisplay(viewer);
 
         ConfigManager.ProfileConfig profile = profileManager.getProfileConfig(viewer);
-        DisplayHologram hologram = new DisplayHologram(target, plugin, profile);
-        hologram.create(viewer);
+        DisplayHologram hologram = new DisplayHologram(target, viewer, plugin, profile);
+        hologram.create();
 
         activeDisplays.put(target.getUniqueId(), hologram);
         viewerToTarget.put(viewer.getUniqueId(), target.getUniqueId());
