@@ -9,7 +9,7 @@ import java.util.*;
 public class ConfigManager {
     private final JavaPlugin plugin;
     private FileConfiguration config;
-    private Map<String, ProfileConfig> profiles = new HashMap<>();
+    private final Map<String, ProfileConfig> profiles = new HashMap<>();
 
     public ConfigManager(JavaPlugin plugin) {
         this.plugin = plugin;
@@ -34,7 +34,12 @@ public class ConfigManager {
                         profilesSection.getString(key + ".name"),
                         profilesSection.getStringList(key + ".description"),
                         profilesSection.getDouble(key + ".display.size", 1.0),
-                        profilesSection.getDouble(key + ".display.height-offset", 2.2),
+                        profilesSection.getString(key + ".display.position", "ABOVE"),
+                        profilesSection.getString(key + ".display.billboard", "VERTICAL"),
+                        profilesSection.getDouble(key + ".display.height-offset", 0.5),
+                        profilesSection.getDouble(key + ".display.offset-x", 0.0),
+                        profilesSection.getDouble(key + ".display.offset-y", 0.0),
+                        profilesSection.getDouble(key + ".display.offset-z", 0.0),
                         profilesSection.getBoolean(key + ".background.enabled", true),
                         profilesSection.getDouble(key + ".background.opacity", 0.3),
                         profilesSection.getString(key + ".background.color", "#000000"),
@@ -55,6 +60,10 @@ public class ConfigManager {
         return profiles.values();
     }
 
+    public Set<String> getProfileIds() {
+        return profiles.keySet();
+    }
+
     public String getDefaultProfile() {
         return config.getString("default-profile", "basic");
     }
@@ -71,8 +80,29 @@ public class ConfigManager {
         return config.getInt("settings.update-interval", 10);
     }
 
+    public boolean isSilentNoPermission() {
+        return config.getBoolean("settings.silent-no-permission", true);
+    }
+
     public String getMessage(String path) {
-        return config.getString("messages." + path, "Message not found: " + path);
+        return config.getString("messages." + path, "");
+    }
+
+    public enum HologramPosition {
+        ABOVE,
+        FRONT,
+        BACK,
+        LEFT,
+        RIGHT,
+        BELOW,
+        ABOVE_FRONT
+    }
+
+    public enum BillboardMode {
+        FIXED,      // Не поворачивается вообще
+        VERTICAL,   // Поворачивается только по вертикали (смотрит на viewer)
+        HORIZONTAL, // Поворачивается только по горизонтали
+        CENTER      // Всегда лицом к viewer
     }
 
     public static class ProfileConfig {
@@ -81,7 +111,12 @@ public class ConfigManager {
         private final String name;
         private final List<String> description;
         private final double size;
+        private final HologramPosition position;
+        private final BillboardMode billboard;
         private final double heightOffset;
+        private final double offsetX;
+        private final double offsetY;
+        private final double offsetZ;
         private final boolean backgroundEnabled;
         private final double backgroundOpacity;
         private final String backgroundColor;
@@ -90,15 +125,22 @@ public class ConfigManager {
         private final List<String> lines;
 
         public ProfileConfig(String id, String permission, String name, List<String> description,
-                             double size, double heightOffset, boolean backgroundEnabled,
-                             double backgroundOpacity, String backgroundColor,
-                             boolean glowing, String glowColor, List<String> lines) {
+                             double size, String position, String billboard, double heightOffset,
+                             double offsetX, double offsetY, double offsetZ,
+                             boolean backgroundEnabled, double backgroundOpacity,
+                             String backgroundColor, boolean glowing, String glowColor,
+                             List<String> lines) {
             this.id = id;
             this.permission = permission;
             this.name = name;
             this.description = description;
             this.size = size;
+            this.position = parsePosition(position);
+            this.billboard = parseBillboard(billboard);
             this.heightOffset = heightOffset;
+            this.offsetX = offsetX;
+            this.offsetY = offsetY;
+            this.offsetZ = offsetZ;
             this.backgroundEnabled = backgroundEnabled;
             this.backgroundOpacity = backgroundOpacity;
             this.backgroundColor = backgroundColor;
@@ -107,12 +149,33 @@ public class ConfigManager {
             this.lines = lines;
         }
 
+        private HologramPosition parsePosition(String pos) {
+            try {
+                return HologramPosition.valueOf(pos.toUpperCase());
+            } catch (IllegalArgumentException e) {
+                return HologramPosition.ABOVE;
+            }
+        }
+
+        private BillboardMode parseBillboard(String mode) {
+            try {
+                return BillboardMode.valueOf(mode.toUpperCase());
+            } catch (IllegalArgumentException e) {
+                return BillboardMode.VERTICAL;
+            }
+        }
+
         public String getId() { return id; }
         public String getPermission() { return permission; }
         public String getName() { return name; }
         public List<String> getDescription() { return description; }
         public double getSize() { return size; }
+        public HologramPosition getPosition() { return position; }
+        public BillboardMode getBillboard() { return billboard; }
         public double getHeightOffset() { return heightOffset; }
+        public double getOffsetX() { return offsetX; }
+        public double getOffsetY() { return offsetY; }
+        public double getOffsetZ() { return offsetZ; }
         public boolean isBackgroundEnabled() { return backgroundEnabled; }
         public double getBackgroundOpacity() { return backgroundOpacity; }
         public Color getBackgroundColor() {
