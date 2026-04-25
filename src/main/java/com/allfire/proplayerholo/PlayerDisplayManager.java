@@ -55,15 +55,24 @@ public class PlayerDisplayManager {
                     Player target = plugin.getServer().getPlayer(entry.getValue());
 
                     if (viewer == null || target == null || !viewer.isOnline() || !target.isOnline()) {
-                        if (viewer != null) removeDisplay(viewer);
+                        if (viewer != null) {
+                            removeDisplay(viewer);
+                        } else {
+                            // Если viewer оффлайн, чистим по target
+                            DisplayHologram hologram = activeDisplays.remove(entry.getValue());
+                            if (hologram != null) hologram.remove();
+                            viewerToTarget.remove(entry.getKey());
+                        }
                         continue;
                     }
 
+                    // Проверка дистанции между viewer и target
                     if (viewer.getLocation().distance(target.getLocation()) > configManager.getMaxDistance()) {
                         removeDisplay(viewer);
                         continue;
                     }
 
+                    // Проверка что viewer всё ещё смотрит на target
                     if (!isLookingAt(viewer, target)) {
                         removeDisplay(viewer);
                         continue;
