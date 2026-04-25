@@ -9,26 +9,28 @@ import org.bukkit.entity.Player;
 import org.bukkit.entity.TextDisplay;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.bukkit.util.Transformation;
+import org.bukkit.util.Vector;
 import org.joml.Quaternionf;
 import org.joml.Vector3f;
 
 public class DisplayHologram {
     private final Player target;
+    private final Player viewer;
     private final JavaPlugin plugin;
     private final ConfigManager.ProfileConfig profileConfig;
     private TextDisplay display;
 
-    public DisplayHologram(Player target, JavaPlugin plugin, ConfigManager.ProfileConfig profileConfig) {
+    public DisplayHologram(Player target, Player viewer, JavaPlugin plugin, ConfigManager.ProfileConfig profileConfig) {
         this.target = target;
+        this.viewer = viewer;
         this.plugin = plugin;
         this.profileConfig = profileConfig;
     }
 
-    public void create(Player viewer) {
+    public void create() {
         try {
-            Location loc = target.getLocation().add(0, profileConfig.getHeightOffset(), 0);
+            Location loc = calculatePosition();
             
-            // Проверяем, что мир существует и загружен
             if (target.getWorld() == null) {
                 plugin.getLogger().warning("Target world is null for player: " + target.getName());
                 return;
@@ -42,7 +44,23 @@ public class DisplayHologram {
             }
 
             display.addScoreboardTag("pph_hologram");
-            display.setBillboard(Display.Billboard.VERTICAL);
+            
+            // Устанавливаем режим отображения
+            switch (profileConfig.getBillboard()) {
+                case FIXED:
+                    display.setBillboard(Display.Billboard.FIXED);
+                    break;
+                case VERTICAL:
+                    display.setBillboard(Display.Billboard.VERTICAL);
+                    break;
+                case HORIZONTAL:
+                    display.setBillboard(Display.Billboard.HORIZONTAL);
+                    break;
+                case CENTER:
+                    display.setBillboard(Display.Billboard.CENTER);
+                    break;
+            }
+            
             display.setSeeThrough(false);
 
             if (profileConfig.isBackgroundEnabled()) {
@@ -73,13 +91,54 @@ public class DisplayHologram {
 
             updateText();
             
-            plugin.getLogger().info("Hologram created for target: " + target.getName() + 
-                                   ", viewer: " + viewer.getName() + 
-                                   ", location: " + loc.toString());
         } catch (Exception e) {
             plugin.getLogger().severe("Error creating hologram: " + e.getMessage());
             e.printStackTrace();
         }
+    }
+
+    private Location calculatePosition() {
+        Location targetLoc = target.getLocation();
+        Vector direction = targetLoc.getDirection().setY(0).normalize();
+        Vector right = new Vector(-direction.getZ(), 0, direction.getX()).normalize();
+        
+        Location baseLoc;
+        
+        switch (profileConfig.getPosition()) {
+            case FRONT:
+                // Перед лицом цели
+                baseLoc = targetLoc.clone().add(direction.multiply(1.5));
+                break;
+            case BACK:
+                // За спиной цели
+                baseLoc = targetLoc.clone().add(direction.multiply(-1.5));
+                break;
+            case LEFT:
+                // Слева от цели
+                baseLoc = targetLoc.clone().add(right.clone().multiply(-1.5));
+                break;
+            case RIGHT:
+                // Справа от цели
+                baseLoc = targetLoc.clone().add(right.clone().multiply(1.5));
+                break;
+            case BELOW:
+                // Под ногами
+                baseLoc = targetLoc.clone().add(0, -1.5, 0);
+                break;
+            case ABOVE_FRONT:
+                // Спереди сверху
+                Vector frontDir = targetLoc.getDirection().setY(0).normalize().multiply(1.0);
+                baseLoc = targetLoc.clone().add(frontDir).add(0, profileConfig.getHeightOffset() + 1.5, 0);
+                break;
+            case ABOVE:
+            default:
+                // Над головой
+                baseLoc = targetLoc.clone().add(0, profileConfig.getHeightOffset() + 2.0, 0);
+                break;
+        }
+        
+        // Применяем дополнительные смещения
+        return baseLoc.add(profileConfig.getOffsetX(), profileConfig.getOffsetY(), profileConfig.getOffsetZ());
     }
 
     public void updateText() {
@@ -111,7 +170,7 @@ public class DisplayHologram {
     public void updatePosition() {
         if (display != null && display.isValid() && target.isOnline()) {
             try {
-                Location loc = target.getLocation().add(0, profileConfig.getHeightOffset(), 0);
+                Location loc = calculatePosition();
                 display.teleport(loc);
             } catch (Exception e) {
                 plugin.getLogger().warning("Error updating hologram position: " + e.getMessage());
