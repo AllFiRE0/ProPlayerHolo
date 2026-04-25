@@ -1,0 +1,55 @@
+name: Build ProPlayerHolo
+
+on:
+  push:
+    branches: [ "main", "master" ]
+    paths-ignore:
+      - '**.md'
+      - 'LICENSE'
+      - '.gitignore'
+  pull_request:
+    branches: [ "main", "master" ]
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    
+    permissions:
+      contents: read
+      packages: write
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+      
+      - name: Set up JDK 21
+        uses: actions/setup-java@v4
+        with:
+          java-version: '21'
+          distribution: 'temurin'
+          cache: maven
+      
+      - name: Build with Maven
+        run: mvn clean package --batch-mode --no-transfer-progress
+      
+      - name: Rename artifact
+        run: |
+          mkdir -p artifact
+          cp target/ProPlayerHolo-*.jar artifact/ProPlayerHolo.jar
+      
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ProPlayerHolo
+          path: artifact/ProPlayerHolo.jar
+          retention-days: 30
+      
+      - name: Create Release (only on tag push)
+        if: startsWith(github.ref, 'refs/tags/')
+        uses: softprops/action-gh-release@v2
+        with:
+          files: artifact/ProPlayerHolo.jar
+          generate_release_notes: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
