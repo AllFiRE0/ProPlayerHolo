@@ -1,0 +1,111 @@
+# ProPlayerHolo by AllF1RE
+# Документация: https://github.com/AllF1RE/ProPlayerHolo
+
+settings:
+  max-distance: 15.0
+  view-angle: 0.95
+  update-interval: 10
+
+profiles:
+  basic:
+    permission: "proplayerholo.profile.basic"
+    name: "&aБазовый"
+    description:
+      - "&7Самый простой профиль"
+      - "&7Показывает основную информацию"
+    display:
+      size: 1.0
+      height-offset: 2.2
+    background:
+      enabled: true
+      opacity: 0.3
+      color: "#000000"
+      glowing: false
+      glow-color: "#FFFFFF"
+    lines:
+      - "<gold>👤 <white>%player_name%"
+      - "<green>❤ <white>%player_health%"
+  
+  vip:
+    permission: "proplayerholo.profile.vip"
+    name: "&6VIP"
+    description:
+      - "&7Расширенный профиль"
+      - "&7Показывает баланс и статистику"
+    display:
+      size: 1.1
+      height-offset: 2.3
+    background:
+      enabled: true
+      opacity: 0.4
+      color: "#1a1a2e"
+      glowing: true
+      glow-color: "#FFD700"
+    lines:
+      - "<gold>⭐ <white>%player_name%"
+      - "<green>💰 Баланс: <white>%vault_eco_balance%"
+      - "<red>❤ Здоровье: <white>%player_health%"
+      - "<aqua>📶 Пинг: <white>%player_ping%ms"
+  
+  premium:
+    permission: "proplayerholo.profile.premium"
+    name: "&dPremium"
+    description:
+      - "&7Премиум профиль"
+      - "&7Максимальная информация"
+    display:
+      size: 1.2
+      height-offset: 2.4
+    background:
+      enabled: true
+      opacity: 0.5
+      color: "#2d1b4e"
+      glowing: true
+      glow-color: "#E0A0FF"
+    lines:
+      - "<light_purple>💎 <white>%player_name%"
+      - "<green>💰 Баланс: <white>%vault_eco_balance%"
+      - "<red>❤ Здоровье: <white>%player_health%"
+      - "<aqua>📶 Пинг: <white>%player_ping%ms"
+      - "<yellow>⏱ Наиграно: <white>%statistic_time_played%"
+      - "<gold>⚔ Убийств: <white>%statistic_player_kills%"
+      - "<gray>💀 Смертей: <white>%statistic_deaths%"
+  
+  admin:
+    permission: "proplayerholo.profile.admin"
+    name: "&cAdmin"
+    description:
+      - "&7Административный профиль"
+      - "&7Показывает всю информацию"
+    display:
+      size: 1.3
+      height-offset: 2.5
+    background:
+      enabled: true
+      opacity: 0.6
+      color: "#3d0000"
+      glowing: true
+      glow-color: "#FF0000"
+    lines:
+      - "<red>👑 <white>%player_name%"
+      - "<green>💰 Баланс: <white>%vault_eco_balance%"
+      - "<red>❤ Здоровье: <white>%player_health%"
+      - "<aqua>📶 Пинг: <white>%player_ping%ms"
+      - "<yellow>⏱ Наиграно: <white>%statistic_time_played%"
+      - "<gold>⚔ Убийств: <white>%statistic_player_kills%"
+      - "<gray>💀 Смертей: <white>%statistic_deaths%"
+      - "<light_purple>🌍 Мир: <white>%player_world%"
+      - "<blue>🎯 Координаты: <white>%player_x%, %player_y%, %player_z%"
+
+default-profile: "basic"
+
+messages:
+  no-permission: "<red>У вас нет прав для использования этой функции!"
+  no-profile-permission: "<red>У вас нет доступа к профилю %profile%!"
+  profile-not-found: "<red>Профиль %profile% не найден!"
+  profile-selected: "<green>Выбран профиль: %profile_name%"
+  profile-list-header: "<gold>Доступные профили:"
+  profile-list-item: "<yellow>%profile_id% <white>- <gray>%profile_name% <dark_gray>(Право: %permission%)"
+  display-on: "<green>Информация о игроке %player% отображается"
+  display-off: "<red>Отображение информации остановлено"
+  config-reloaded: "<green>Конфигурация перезагружена!"
