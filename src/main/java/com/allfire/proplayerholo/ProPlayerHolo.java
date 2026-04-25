@@ -3,6 +3,8 @@ package com.allfire.proplayerholo;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.minimessage.MiniMessage;
 import org.bukkit.World;
+import org.bukkit.command.Command;
+import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 import org.bukkit.entity.TextDisplay;
 import org.bukkit.event.EventHandler;
@@ -10,6 +12,7 @@ import org.bukkit.event.Listener;
 import org.bukkit.event.player.PlayerInteractEntityEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
 import org.bukkit.plugin.java.JavaPlugin;
+import org.jetbrains.annotations.NotNull;
 
 public class ProPlayerHolo extends JavaPlugin implements Listener {
     private PlayerDisplayManager displayManager;
@@ -52,10 +55,10 @@ public class ProPlayerHolo extends JavaPlugin implements Listener {
     }
 
     @Override
-    public boolean onCommand(@org.bukkit.command.CommandSender sender,
-                             @org.bukkit.command.Command command,
-                             @org.jetbrains.annotations.NotNull String label,
-                             @org.jetbrains.annotations.NotNull String[] args) {
+    public boolean onCommand(@NotNull CommandSender sender,
+                             @NotNull Command command,
+                             @NotNull String label,
+                             @NotNull String[] args) {
         if (args.length == 0) {
             sendHelp(sender);
             return true;
@@ -141,7 +144,7 @@ public class ProPlayerHolo extends JavaPlugin implements Listener {
         }
     }
 
-    private void sendHelp(org.bukkit.command.CommandSender sender) {
+    private void sendHelp(CommandSender sender) {
         sender.sendMessage(parseMessage("<gold>ProPlayerHolo v1.0.0 by <white>AllF1RE"));
         sender.sendMessage(parseMessage("<yellow>/pph reload <gray>- Reload config"));
         sender.sendMessage(parseMessage("<yellow>/pph profile <id> <gray>- Select profile"));
