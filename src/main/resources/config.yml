@@ -1,21 +1,52 @@
 # ProPlayerHolo by AllF1RE
-# Документация: https://github.com/AllF1RE/ProPlayerHolo
+# 
+# Позиции голограммы (position):
+#   ABOVE       - над головой цели
+#   FRONT       - перед лицом цели
+#   BACK        - за спиной цели
+#   LEFT        - слева от цели
+#   RIGHT       - справа от цели
+#   BELOW       - под ногами цели
+#   ABOVE_FRONT - спереди сверху
+#
+# Режимы отображения (billboard):
+#   FIXED      - зафиксирована, не поворачивается
+#   VERTICAL   - поворачивается только вверх/вниз
+#   HORIZONTAL - поворачивается только влево/вправо
+#   CENTER     - всегда лицом к зрителю
+#
+# Цвета указываются в формате MiniMessage:
+#   <red>, <green>, <blue>, <yellow>, <gold>, <aqua>,
+#   <light_purple>, <white>, <gray>, <dark_gray>, <black>,
+#   <dark_red>, <dark_green>, <dark_blue>
+#   Или HEX: <#FF5733>
 
 settings:
+  # Максимальное расстояние в блоках до цели
   max-distance: 15.0
+  # Чувствительность угла обзора (0.0 - 1.0, где 1.0 = смотреть точно на цель)
   view-angle: 0.95
+  # Интервал обновления в тиках (20 тиков = 1 секунда)
   update-interval: 10
+  # Если true - без права proplayerholo.use клик не срабатывает и не выводит сообщение
+  silent-no-permission: true
 
+# Профили голограмм (можно добавлять бесконечно)
 profiles:
   basic:
     permission: "proplayerholo.profile.basic"
-    name: "&aБазовый"
+    name: "<green>Базовый"
     description:
-      - "&7Самый простой профиль"
-      - "&7Показывает основную информацию"
+      - "<gray>Самый простой профиль"
+      - "<gray>Показывает основную информацию"
     display:
       size: 1.0
-      height-offset: 2.2
+      position: "ABOVE"
+      billboard: "VERTICAL"
+      height-offset: 0.5
+      offset-x: 0.0
+      offset-y: 0.0
+      offset-z: 0.0
     background:
       enabled: true
       opacity: 0.3
@@ -25,16 +56,21 @@ profiles:
     lines:
       - "<gold>👤 <white>%player_name%"
       - "<green>❤ <white>%player_health%"
-  
+
   vip:
     permission: "proplayerholo.profile.vip"
-    name: "&6VIP"
+    name: "<gold>VIP"
     description:
-      - "&7Расширенный профиль"
-      - "&7Показывает баланс и статистику"
+      - "<gray>Расширенный профиль"
+      - "<gray>Показывает баланс и статистику"
     display:
       size: 1.1
-      height-offset: 2.3
+      position: "ABOVE_FRONT"
+      billboard: "CENTER"
+      height-offset: 0.3
+      offset-x: 0.0
+      offset-y: 0.0
+      offset-z: 0.0
     background:
       enabled: true
       opacity: 0.4
@@ -46,16 +82,21 @@ profiles:
       - "<green>💰 Баланс: <white>%vault_eco_balance%"
       - "<red>❤ Здоровье: <white>%player_health%"
       - "<aqua>📶 Пинг: <white>%player_ping%ms"
-  
+
   premium:
     permission: "proplayerholo.profile.premium"
-    name: "&dPremium"
+    name: "<light_purple>Premium"
     description:
-      - "&7Премиум профиль"
-      - "&7Максимальная информация"
+      - "<gray>Премиум профиль"
+      - "<gray>Максимальная информация"
     display:
       size: 1.2
-      height-offset: 2.4
+      position: "FRONT"
+      billboard: "FIXED"
+      height-offset: 1.0
+      offset-x: 0.0
+      offset-y: 0.0
+      offset-z: 0.0
     background:
       enabled: true
       opacity: 0.5
@@ -70,16 +111,21 @@ profiles:
       - "<yellow>⏱ Наиграно: <white>%statistic_time_played%"
       - "<gold>⚔ Убийств: <white>%statistic_player_kills%"
       - "<gray>💀 Смертей: <white>%statistic_deaths%"
-  
+
   admin:
     permission: "proplayerholo.profile.admin"
-    name: "&cAdmin"
+    name: "<red>Admin"
     description:
-      - "&7Административный профиль"
-      - "&7Показывает всю информацию"
+      - "<gray>Административный профиль"
+      - "<gray>Показывает всю информацию"
     display:
       size: 1.3
-      height-offset: 2.5
+      position: "ABOVE"
+      billboard: "VERTICAL"
+      height-offset: 0.5
+      offset-x: 0.0
+      offset-y: 0.0
+      offset-z: 0.0
     background:
       enabled: true
       opacity: 0.6
@@ -95,17 +141,19 @@ profiles:
       - "<gold>⚔ Убийств: <white>%statistic_player_kills%"
       - "<gray>💀 Смертей: <white>%statistic_deaths%"
       - "<light_purple>🌍 Мир: <white>%player_world%"
-      - "<blue>🎯 Координаты: <white>%player_x%, %player_y%, %player_z%"
+      - "<blue>🎯 XYZ: <white>%player_x% %player_y% %player_z%"
 
+# Профиль по умолчанию (если игрок не выбрал другой)
 default-profile: "basic"
 
+# Сообщения плагина (оставь "" чтобы не выводить)
 messages:
-  no-permission: "<red>У вас нет прав для использования этой функции!"
+  no-permission: ""
   no-profile-permission: "<red>У вас нет доступа к профилю %profile%!"
   profile-not-found: "<red>Профиль %profile% не найден!"
   profile-selected: "<green>Выбран профиль: %profile_name%"
-  profile-list-header: "<gold>Доступные профили:"
-  profile-list-item: "<yellow>%profile_id% <white>- <gray>%profile_name% <dark_gray>(Право: %permission%)"
-  display-on: "<green>Информация о игроке %player% отображается"
-  display-off: "<red>Отображение информации остановлено"
-  config-reloaded: "<green>Конфигурация перезагружена!"
+  profile-list-header: "<gold>▌ Доступные профили:"
+  profile-list-item: "  <yellow>%profile_id% <dark_gray>▸ %profile_name%"
+  display-on: ""
+  display-off: ""
+  config-reloaded: "<green>✔ Конфигурация перезагружена!"
