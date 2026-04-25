@@ -3,8 +3,7 @@ package com.allfire.proplayerholo;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.minimessage.MiniMessage;
 import org.bukkit.World;
-import org.bukkit.command.Command;
-import org.bukkit.command.CommandSender;
+import org.bukkit.command.*;
 import org.bukkit.entity.Player;
 import org.bukkit.entity.TextDisplay;
 import org.bukkit.event.EventHandler;
@@ -13,8 +12,12 @@ import org.bukkit.event.player.PlayerInteractEntityEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
-public class ProPlayerHolo extends JavaPlugin implements Listener {
+import java.util.ArrayList;
+import java.util.List;
+
+public class ProPlayerHolo extends JavaPlugin implements Listener, TabCompleter {
     private PlayerDisplayManager displayManager;
     private ConfigManager configManager;
     private PlayerProfileManager profileManager;
@@ -28,6 +31,12 @@ public class ProPlayerHolo extends JavaPlugin implements Listener {
         displayManager = new PlayerDisplayManager(this, configManager, profileManager);
 
         getServer().getPluginManager().registerEvents(this, this);
+        
+        PluginCommand command = getCommand("proplayerholo");
+        if (command != null) {
+            command.setTabCompleter(this);
+        }
+        
         getLogger().info("ProPlayerHolo enabled! Author: AllF1RE");
     }
 
@@ -68,25 +77,21 @@ public class ProPlayerHolo extends JavaPlugin implements Listener {
             case "reload":
                 if (sender.hasPermission("proplayerholo.reload")) {
                     configManager.reload();
-                    sender.sendMessage(parseMessage(configManager.getMessage("config-reloaded")));
+                    sendMessage(sender, configManager.getMessage("config-reloaded"));
                 } else {
-                    sender.sendMessage(parseMessage(configManager.getMessage("no-permission")));
+                    sendMessage(sender, configManager.getMessage("no-permission"));
                 }
                 break;
 
             case "profile":
                 if (sender instanceof Player player) {
                     handleProfileCommand(player, args);
-                } else {
-                    sender.sendMessage(Component.text("This command is for players only!"));
                 }
                 break;
 
             case "list":
                 if (sender instanceof Player player) {
                     listProfiles(player);
-                } else {
-                    sender.sendMessage(Component.text("This command is for players only!"));
                 }
                 break;
 
@@ -95,6 +100,24 @@ public class ProPlayerHolo extends JavaPlugin implements Listener {
                 break;
         }
         return true;
+    }
+
+    @Override
+    public @Nullable List<String> onTabComplete(@NotNull CommandSender sender,
+                                                 @NotNull Command command,
+                                                 @NotNull String label,
+                                                 @NotNull String[] args) {
+        List<String> completions = new ArrayList<>();
+        
+        if (args.length == 1) {
+            completions.add("reload");
+            completions.add("profile");
+            completions.add("list");
+        } else if (args.length == 2 && args[0].equalsIgnoreCase("profile")) {
+            completions.addAll(configManager.getProfileIds());
+        }
+        
+        return completions;
     }
 
     private void handleProfileCommand(Player player, String[] args) {
@@ -107,52 +130,47 @@ public class ProPlayerHolo extends JavaPlugin implements Listener {
         ConfigManager.ProfileConfig profile = configManager.getProfile(profileId);
 
         if (profile == null) {
-            player.sendMessage(parseMessage(
-                    configManager.getMessage("profile-not-found")
-                            .replace("%profile%", profileId)
-            ));
+            sendMessage(player, configManager.getMessage("profile-not-found")
+                    .replace("%profile%", profileId));
             return;
         }
 
         if (!player.hasPermission(profile.getPermission()) && !player.hasPermission("proplayerholo.admin")) {
-            player.sendMessage(parseMessage(
-                    configManager.getMessage("no-profile-permission")
-                            .replace("%profile%", profileId)
-            ));
+            sendMessage(player, configManager.getMessage("no-profile-permission")
+                    .replace("%profile%", profileId));
             return;
         }
 
         profileManager.setProfile(player, profileId);
-        player.sendMessage(parseMessage(
-                configManager.getMessage("profile-selected")
-                        .replace("%profile_name%", profile.getName())
-        ));
+        sendMessage(player, configManager.getMessage("profile-selected")
+                .replace("%profile_name%", profile.getName()));
     }
 
     private void listProfiles(Player player) {
-        player.sendMessage(parseMessage(configManager.getMessage("profile-list-header")));
+        sendMessage(player, configManager.getMessage("profile-list-header"));
 
         for (ConfigManager.ProfileConfig profile : configManager.getAllProfiles()) {
             if (player.hasPermission(profile.getPermission()) || player.hasPermission("proplayerholo.admin")) {
-                player.sendMessage(parseMessage(
-                        configManager.getMessage("profile-list-item")
-                                .replace("%profile_id%", profile.getId())
-                                .replace("%profile_name%", profile.getName())
-                                .replace("%permission%", profile.getPermission())
-                ));
+                String message = configManager.getMessage("profile-list-item")
+                        .replace("%profile_id%", profile.getId())
+                        .replace("%profile_name%", profile.getName())
+                        .replace("%permission%", profile.getPermission());
+                sendMessage(player, message);
             }
         }
     }
 
     private void sendHelp(CommandSender sender) {
-        sender.sendMessage(parseMessage("<gold>ProPlayerHolo v1.0.0 by <white>AllF1RE"));
-        sender.sendMessage(parseMessage("<yellow>/pph reload <gray>- Reload config"));
-        sender.sendMessage(parseMessage("<yellow>/pph profile <id> <gray>- Select profile"));
-        sender.sendMessage(parseMessage("<yellow>/pph list <gray>- List available profiles"));
+        sendMessage(sender, "<gold>ProPlayerHolo v1.0.0 by <white>AllF1RE");
+        sendMessage(sender, "<yellow>/pph reload <gray>- Reload config");
+        sendMessage(sender, "<yellow>/pph profile <id> <gray>- Select profile");
+        sendMessage(sender, "<yellow>/pph list <gray>- List available profiles");
     }
 
-    private Component parseMessage(String message) {
-        return MiniMessage.miniMessage().deserialize(message);
+    private void sendMessage(CommandSender sender, String message) {
+        if (message != null && !message.isEmpty()) {
+            sender.sendMessage(MiniMessage.miniMessage().deserialize(message));
+        }
     }
 
     @EventHandler
@@ -163,11 +181,12 @@ public class ProPlayerHolo extends JavaPlugin implements Listener {
         Player viewer = event.getPlayer();
 
         if (!viewer.hasPermission("proplayerholo.use")) {
-            viewer.sendMessage(parseMessage(configManager.getMessage("no-permission")));
+            if (!configManager.isSilentNoPermission()) {
+                sendMessage(viewer, configManager.getMessage("no-permission"));
+            }
             return;
         }
 
-        // Отменяем стандартное действие
         event.setCancelled(true);
 
         if (displayManager.hasActiveDisplay(viewer)) {
@@ -175,10 +194,8 @@ public class ProPlayerHolo extends JavaPlugin implements Listener {
         }
 
         displayManager.showDisplay(viewer, target);
-        viewer.sendMessage(parseMessage(
-                configManager.getMessage("display-on")
-                        .replace("%player%", target.getName())
-        ));
+        sendMessage(viewer, configManager.getMessage("display-on")
+                .replace("%player%", target.getName()));
     }
 
     @EventHandler
