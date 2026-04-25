@@ -78,7 +78,7 @@ public class ProPlayerHolo extends JavaPlugin implements Listener {
                 if (sender instanceof Player player) {
                     handleProfileCommand(player, args);
                 } else {
-                    sender.sendMessage("This command is for players only!");
+                    sender.sendMessage(Component.text("This command is for players only!"));
                 }
                 break;
 
@@ -86,7 +86,7 @@ public class ProPlayerHolo extends JavaPlugin implements Listener {
                 if (sender instanceof Player player) {
                     listProfiles(player);
                 } else {
-                    sender.sendMessage("This command is for players only!");
+                    sender.sendMessage(Component.text("This command is for players only!"));
                 }
                 break;
 
@@ -167,16 +167,18 @@ public class ProPlayerHolo extends JavaPlugin implements Listener {
             return;
         }
 
+        // Отменяем стандартное действие
+        event.setCancelled(true);
+
         if (displayManager.hasActiveDisplay(viewer)) {
             displayManager.removeDisplay(viewer);
-            viewer.sendMessage(parseMessage(configManager.getMessage("display-off")));
-        } else {
-            displayManager.showDisplay(viewer, target);
-            viewer.sendMessage(parseMessage(
-                    configManager.getMessage("display-on")
-                            .replace("%player%", target.getName())
-            ));
         }
+
+        displayManager.showDisplay(viewer, target);
+        viewer.sendMessage(parseMessage(
+                configManager.getMessage("display-on")
+                        .replace("%player%", target.getName())
+        ));
     }
 
     @EventHandler
