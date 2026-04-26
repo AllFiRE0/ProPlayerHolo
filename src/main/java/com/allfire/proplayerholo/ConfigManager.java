@@ -4,6 +4,7 @@ import org.bukkit.Color;
 import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.plugin.java.JavaPlugin;
+
 import java.util.*;
 
 public class ConfigManager {
@@ -28,28 +29,41 @@ public class ConfigManager {
         ConfigurationSection profilesSection = config.getConfigurationSection("profiles");
         if (profilesSection != null) {
             for (String key : profilesSection.getKeys(false)) {
+                ConfigurationSection p = profilesSection.getConfigurationSection(key);
+                if (p == null) continue;
+
+                // Text shadow
+                boolean shadowEnabled = p.getBoolean("text-shadow.enabled", true);
+                String shadowColor = p.getString("text-shadow.color", "#000000");
+                int shadowOffsetX = p.getInt("text-shadow.offset-x", 1);
+                int shadowOffsetY = p.getInt("text-shadow.offset-y", 1);
+
                 ProfileConfig profile = new ProfileConfig(
                         key,
-                        profilesSection.getString(key + ".permission"),
-                        profilesSection.getString(key + ".name"),
-                        profilesSection.getStringList(key + ".description"),
-                        profilesSection.getDouble(key + ".display.size", 1.0),
-                        profilesSection.getDouble(key + ".display.scale-x", 0.0),
-                        profilesSection.getDouble(key + ".display.scale-y", 0.0),
-                        profilesSection.getDouble(key + ".display.scale-z", 0.0),
-                        profilesSection.getString(key + ".display.position", "ABOVE"),
-                        profilesSection.getString(key + ".display.billboard", "CENTER"),
-                        profilesSection.getDouble(key + ".display.height-offset", 0.5),
-                        profilesSection.getDouble(key + ".display.offset-x", 0.0),
-                        profilesSection.getDouble(key + ".display.offset-y", 0.0),
-                        profilesSection.getDouble(key + ".display.offset-z", 0.0),
-                        profilesSection.getDouble(key + ".display.distance", 1.5),
-                        profilesSection.getBoolean(key + ".background.enabled", true),
-                        profilesSection.getDouble(key + ".background.opacity", 0.3),
-                        profilesSection.getString(key + ".background.color", "#000000"),
-                        profilesSection.getBoolean(key + ".background.glowing", false),
-                        profilesSection.getString(key + ".background.glow-color", "#FFFFFF"),
-                        profilesSection.getStringList(key + ".lines")
+                        p.getString("permission"),
+                        p.getString("name"),
+                        p.getStringList("description"),
+                        p.getString("mode", "TARGET_TRACKING"),
+                        p.getInt("duration", 10),
+                        p.getDouble("display.size", 1.0),
+                        p.getDouble("display.scale-x", 0.0),
+                        p.getDouble("display.scale-y", 0.0),
+                        p.getDouble("display.scale-z", 0.0),
+                        p.getString("display.position", "ABOVE"),
+                        p.getString("display.billboard", "CENTER"),
+                        p.getDouble("display.height-offset", 0.5),
+                        p.getDouble("display.offset-x", 0.0),
+                        p.getDouble("display.offset-y", 0.0),
+                        p.getDouble("display.offset-z", 0.0),
+                        p.getDouble("display.distance", 1.5),
+                        shadowEnabled, shadowColor, shadowOffsetX, shadowOffsetY,
+                        p.getBoolean("background.enabled", true),
+                        p.getDouble("background.opacity", 0.3),
+                        p.getString("background.color", "#000000"),
+                        p.getBoolean("background.glowing", false),
+                        p.getString("background.glow-color", "#FFFFFF"),
+                        p.getInt("background.glow-intensity", 0),
+                        p.getStringList("lines")
                 );
                 profiles.put(key, profile);
             }
@@ -92,58 +106,56 @@ public class ConfigManager {
         return config.getString("messages." + path, "");
     }
 
+    // ─── Enums ────────────────────────────────────────
+
+    public enum HologramMode {
+        TARGET_TRACKING,
+        VIEWER_FACE
+    }
+
     public enum HologramPosition {
-        ABOVE,
-        FRONT,
-        BACK,
-        LEFT,
-        RIGHT,
-        BELOW,
-        ABOVE_FRONT,
-        CUSTOM
+        ABOVE, FRONT, BACK, LEFT, RIGHT, BELOW, ABOVE_FRONT, CUSTOM
     }
 
     public enum BillboardMode {
-        FIXED,
-        VERTICAL,
-        HORIZONTAL,
-        CENTER
+        FIXED, VERTICAL, HORIZONTAL, CENTER
     }
 
+    // ─── Profile Config ──────────────────────────────
+
     public static class ProfileConfig {
-        private final String id;
-        private final String permission;
-        private final String name;
+        private final String id, permission, name;
         private final List<String> description;
-        private final double size;
-        private final double scaleX;
-        private final double scaleY;
-        private final double scaleZ;
+        private final HologramMode mode;
+        private final int duration;
+        private final double size, scaleX, scaleY, scaleZ;
         private final HologramPosition position;
         private final BillboardMode billboard;
-        private final double heightOffset;
-        private final double offsetX;
-        private final double offsetY;
-        private final double offsetZ;
-        private final double distance;
+        private final double heightOffset, offsetX, offsetY, offsetZ, distance;
+        private final boolean shadowEnabled;
+        private final String shadowColor;
+        private final int shadowOffsetX, shadowOffsetY;
         private final boolean backgroundEnabled;
         private final double backgroundOpacity;
         private final String backgroundColor;
         private final boolean glowing;
         private final String glowColor;
+        private final int glowIntensity;
         private final List<String> lines;
 
         public ProfileConfig(String id, String permission, String name, List<String> description,
-                             double size, double scaleX, double scaleY, double scaleZ,
+                             String mode, int duration, double size, double scaleX, double scaleY, double scaleZ,
                              String position, String billboard, double heightOffset,
                              double offsetX, double offsetY, double offsetZ, double distance,
-                             boolean backgroundEnabled, double backgroundOpacity,
-                             String backgroundColor, boolean glowing, String glowColor,
-                             List<String> lines) {
+                             boolean shadowEnabled, String shadowColor, int shadowOffsetX, int shadowOffsetY,
+                             boolean backgroundEnabled, double backgroundOpacity, String backgroundColor,
+                             boolean glowing, String glowColor, int glowIntensity, List<String> lines) {
             this.id = id;
             this.permission = permission;
             this.name = name;
             this.description = description;
+            this.mode = parseMode(mode);
+            this.duration = duration;
             this.size = size;
             this.scaleX = scaleX;
             this.scaleY = scaleY;
@@ -155,34 +167,41 @@ public class ConfigManager {
             this.offsetY = offsetY;
             this.offsetZ = offsetZ;
             this.distance = distance;
+            this.shadowEnabled = shadowEnabled;
+            this.shadowColor = shadowColor;
+            this.shadowOffsetX = shadowOffsetX;
+            this.shadowOffsetY = shadowOffsetY;
             this.backgroundEnabled = backgroundEnabled;
             this.backgroundOpacity = backgroundOpacity;
             this.backgroundColor = backgroundColor;
             this.glowing = glowing;
             this.glowColor = glowColor;
+            this.glowIntensity = glowIntensity;
             this.lines = lines;
         }
 
-        private HologramPosition parsePosition(String pos) {
-            try {
-                return HologramPosition.valueOf(pos.toUpperCase());
-            } catch (IllegalArgumentException e) {
-                return HologramPosition.ABOVE;
-            }
+        private HologramMode parseMode(String m) {
+            try { return HologramMode.valueOf(m.toUpperCase()); }
+            catch (IllegalArgumentException e) { return HologramMode.TARGET_TRACKING; }
         }
 
-        private BillboardMode parseBillboard(String mode) {
-            try {
-                return BillboardMode.valueOf(mode.toUpperCase());
-            } catch (IllegalArgumentException e) {
-                return BillboardMode.CENTER;
-            }
+        private HologramPosition parsePosition(String p) {
+            try { return HologramPosition.valueOf(p.toUpperCase()); }
+            catch (IllegalArgumentException e) { return HologramPosition.ABOVE; }
         }
 
+        private BillboardMode parseBillboard(String b) {
+            try { return BillboardMode.valueOf(b.toUpperCase()); }
+            catch (IllegalArgumentException e) { return BillboardMode.CENTER; }
+        }
+
+        // Getters
         public String getId() { return id; }
         public String getPermission() { return permission; }
         public String getName() { return name; }
         public List<String> getDescription() { return description; }
+        public HologramMode getMode() { return mode; }
+        public int getDuration() { return duration; }
         public double getSize() { return size; }
         public double getScaleX() { return scaleX; }
         public double getScaleY() { return scaleY; }
@@ -194,6 +213,10 @@ public class ConfigManager {
         public double getOffsetY() { return offsetY; }
         public double getOffsetZ() { return offsetZ; }
         public double getDistance() { return distance; }
+        public boolean isShadowEnabled() { return shadowEnabled; }
+        public String getShadowColor() { return shadowColor; }
+        public int getShadowOffsetX() { return shadowOffsetX; }
+        public int getShadowOffsetY() { return shadowOffsetY; }
         public boolean isBackgroundEnabled() { return backgroundEnabled; }
         public double getBackgroundOpacity() { return backgroundOpacity; }
         public Color getBackgroundColor() {
@@ -205,6 +228,7 @@ public class ConfigManager {
             int rgb = Integer.parseInt(glowColor.replace("#", ""), 16);
             return Color.fromRGB(rgb);
         }
+        public int getGlowIntensity() { return glowIntensity; }
         public List<String> getLines() { return lines; }
     }
 }
