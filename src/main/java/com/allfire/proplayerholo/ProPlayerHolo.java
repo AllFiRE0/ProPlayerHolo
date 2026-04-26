@@ -1,6 +1,5 @@
 package com.allfire.proplayerholo;
 
-import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.minimessage.MiniMessage;
 import org.bukkit.World;
 import org.bukkit.command.*;
@@ -25,26 +24,20 @@ public class ProPlayerHolo extends JavaPlugin implements Listener, TabCompleter 
     @Override
     public void onEnable() {
         cleanOrphanDisplays();
-
         configManager = new ConfigManager(this);
         profileManager = new PlayerProfileManager(configManager);
         displayManager = new PlayerDisplayManager(this, configManager, profileManager);
-
         getServer().getPluginManager().registerEvents(this, this);
-        
-        PluginCommand command = getCommand("proplayerholo");
-        if (command != null) {
-            command.setTabCompleter(this);
-        }
-        
+
+        PluginCommand cmd = getCommand("proplayerholo");
+        if (cmd != null) cmd.setTabCompleter(this);
+
         getLogger().info("ProPlayerHolo enabled! Author: AllF1RE");
     }
 
     @Override
     public void onDisable() {
-        if (displayManager != null) {
-            displayManager.cleanup();
-        }
+        if (displayManager != null) displayManager.cleanup();
         getLogger().info("ProPlayerHolo disabled!");
     }
 
@@ -58,151 +51,105 @@ public class ProPlayerHolo extends JavaPlugin implements Listener, TabCompleter 
                 }
             }
         }
-        if (removed > 0) {
-            getLogger().info("Cleaned up " + removed + " orphan holograms from previous session");
-        }
+        if (removed > 0) getLogger().info("Cleaned " + removed + " orphan holograms");
     }
 
     @Override
-    public boolean onCommand(@NotNull CommandSender sender,
-                             @NotNull Command command,
-                             @NotNull String label,
-                             @NotNull String[] args) {
-        if (args.length == 0) {
-            sendHelp(sender);
-            return true;
-        }
+    public boolean onCommand(@NotNull CommandSender sender, @NotNull Command cmd,
+                             @NotNull String label, @NotNull String[] args) {
+        if (args.length == 0) { sendHelp(sender); return true; }
 
         switch (args[0].toLowerCase()) {
-            case "reload":
+            case "reload" -> {
                 if (sender.hasPermission("proplayerholo.reload")) {
                     configManager.reload();
-                    sendMessage(sender, configManager.getMessage("config-reloaded"));
-                } else {
-                    sendMessage(sender, configManager.getMessage("no-permission"));
-                }
-                break;
-
-            case "profile":
-                if (sender instanceof Player player) {
-                    handleProfileCommand(player, args);
-                }
-                break;
-
-            case "list":
-                if (sender instanceof Player player) {
-                    listProfiles(player);
-                }
-                break;
-
-            default:
-                sendHelp(sender);
-                break;
+                    sendMsg(sender, configManager.getMessage("config-reloaded"));
+                } else sendMsg(sender, configManager.getMessage("no-permission"));
+            }
+            case "profile" -> {
+                if (sender instanceof Player p) handleProfile(p, args);
+            }
+            case "list" -> {
+                if (sender instanceof Player p) listProfiles(p);
+            }
+            default -> sendHelp(sender);
         }
         return true;
     }
 
     @Override
-    public @Nullable List<String> onTabComplete(@NotNull CommandSender sender,
-                                                 @NotNull Command command,
-                                                 @NotNull String label,
-                                                 @NotNull String[] args) {
-        List<String> completions = new ArrayList<>();
-        
+    public @Nullable List<String> onTabComplete(@NotNull CommandSender sender, @NotNull Command cmd,
+                                                 @NotNull String label, @NotNull String[] args) {
+        List<String> list = new ArrayList<>();
         if (args.length == 1) {
-            completions.add("reload");
-            completions.add("profile");
-            completions.add("list");
+            list.add("reload"); list.add("profile"); list.add("list");
         } else if (args.length == 2 && args[0].equalsIgnoreCase("profile")) {
-            completions.addAll(configManager.getProfileIds());
+            list.addAll(configManager.getProfileIds());
         }
-        
-        return completions;
+        return list;
     }
 
-    private void handleProfileCommand(Player player, String[] args) {
-        if (args.length < 2) {
-            listProfiles(player);
-            return;
-        }
-
-        String profileId = args[1];
-        ConfigManager.ProfileConfig profile = configManager.getProfile(profileId);
-
+    private void handleProfile(Player player, String[] args) {
+        if (args.length < 2) { listProfiles(player); return; }
+        String id = args[1];
+        ConfigManager.ProfileConfig profile = configManager.getProfile(id);
         if (profile == null) {
-            sendMessage(player, configManager.getMessage("profile-not-found")
-                    .replace("%profile%", profileId));
+            sendMsg(player, configManager.getMessage("profile-not-found").replace("%profile%", id));
             return;
         }
-
         if (!player.hasPermission(profile.getPermission()) && !player.hasPermission("proplayerholo.admin")) {
-            sendMessage(player, configManager.getMessage("no-profile-permission")
-                    .replace("%profile%", profileId));
+            sendMsg(player, configManager.getMessage("no-profile-permission").replace("%profile%", id));
             return;
         }
-
-        profileManager.setProfile(player, profileId);
-        sendMessage(player, configManager.getMessage("profile-selected")
-                .replace("%profile_name%", profile.getName()));
+        profileManager.setProfile(player, id);
+        sendMsg(player, configManager.getMessage("profile-selected").replace("%profile_name%", profile.getName()));
     }
 
     private void listProfiles(Player player) {
-        sendMessage(player, configManager.getMessage("profile-list-header"));
-
-        for (ConfigManager.ProfileConfig profile : configManager.getAllProfiles()) {
-            if (player.hasPermission(profile.getPermission()) || player.hasPermission("proplayerholo.admin")) {
-                String message = configManager.getMessage("profile-list-item")
-                        .replace("%profile_id%", profile.getId())
-                        .replace("%profile_name%", profile.getName())
-                        .replace("%permission%", profile.getPermission());
-                sendMessage(player, message);
+        sendMsg(player, configManager.getMessage("profile-list-header"));
+        for (ConfigManager.ProfileConfig p : configManager.getAllProfiles()) {
+            if (player.hasPermission(p.getPermission()) || player.hasPermission("proplayerholo.admin")) {
+                sendMsg(player, configManager.getMessage("profile-list-item")
+                        .replace("%profile_id%", p.getId())
+                        .replace("%profile_name%", p.getName())
+                        .replace("%permission%", p.getPermission()));
             }
         }
     }
 
     private void sendHelp(CommandSender sender) {
-        sendMessage(sender, "<gold>ProPlayerHolo v1.0.0 by <white>AllF1RE");
-        sendMessage(sender, "<yellow>/pph reload <gray>- Reload config");
-        sendMessage(sender, "<yellow>/pph profile <id> <gray>- Select profile");
-        sendMessage(sender, "<yellow>/pph list <gray>- List available profiles");
+        sendMsg(sender, "<gold>ProPlayerHolo v1.0.0 by <white>AllF1RE");
+        sendMsg(sender, "<yellow>/pph reload <gray>- Reload config");
+        sendMsg(sender, "<yellow>/pph profile <id> <gray>- Select profile");
+        sendMsg(sender, "<yellow>/pph list <gray>- List profiles");
     }
 
-    private void sendMessage(CommandSender sender, String message) {
-        if (message != null && !message.isEmpty()) {
-            sender.sendMessage(MiniMessage.miniMessage().deserialize(message));
-        }
+    private void sendMsg(CommandSender sender, String msg) {
+        if (msg != null && !msg.isEmpty()) sender.sendMessage(MiniMessage.miniMessage().deserialize(msg));
     }
 
     @EventHandler
-    public void onPlayerInteractEntity(PlayerInteractEntityEvent event) {
-        if (!(event.getRightClicked() instanceof Player target)) return;
-        if (!event.getPlayer().isSneaking()) return;
-
-        Player viewer = event.getPlayer();
+    public void onInteract(PlayerInteractEntityEvent e) {
+        if (!(e.getRightClicked() instanceof Player target)) return;
+        if (!e.getPlayer().isSneaking()) return;
+        Player viewer = e.getPlayer();
 
         if (!viewer.hasPermission("proplayerholo.use")) {
-            if (!configManager.isSilentNoPermission()) {
-                sendMessage(viewer, configManager.getMessage("no-permission"));
-            }
+            if (!configManager.isSilentNoPermission()) sendMsg(viewer, configManager.getMessage("no-permission"));
             return;
         }
-
-        event.setCancelled(true);
+        e.setCancelled(true);
 
         if (displayManager.hasActiveDisplay(viewer)) {
             displayManager.removeDisplay(viewer);
         }
-
         displayManager.showDisplay(viewer, target);
-        sendMessage(viewer, configManager.getMessage("display-on")
-                .replace("%player%", target.getName()));
+        sendMsg(viewer, configManager.getMessage("display-on").replace("%player%", target.getName()));
     }
 
     @EventHandler
-    public void onPlayerQuit(PlayerQuitEvent event) {
-        if (displayManager.hasActiveDisplay(event.getPlayer())) {
-            displayManager.removeDisplay(event.getPlayer());
-        }
-        profileManager.removePlayer(event.getPlayer());
+    public void onQuit(PlayerQuitEvent e) {
+        if (displayManager.hasActiveDisplay(e.getPlayer())) displayManager.removeDisplay(e.getPlayer());
+        profileManager.removePlayer(e.getPlayer());
     }
 }
