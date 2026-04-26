@@ -30,72 +30,54 @@ public class DisplayHologram {
     public void create() {
         try {
             Location loc = calculatePosition();
-            
-            if (target.getWorld() == null) {
-                plugin.getLogger().warning("Target world is null for player: " + target.getName());
-                return;
-            }
-            
+            if (target.getWorld() == null) return;
+
             display = target.getWorld().spawn(loc, TextDisplay.class);
-            
-            if (display == null) {
-                plugin.getLogger().warning("Failed to spawn TextDisplay for target: " + target.getName());
-                return;
-            }
+            if (display == null) return;
 
             display.addScoreboardTag("pph_hologram");
-            
-            // Применяем billboard
+
+            // Billboard
             switch (profileConfig.getBillboard()) {
-                case FIXED:
-                    display.setBillboard(Display.Billboard.FIXED);
-                    break;
-                case VERTICAL:
-                    display.setBillboard(Display.Billboard.VERTICAL);
-                    break;
-                case HORIZONTAL:
-                    display.setBillboard(Display.Billboard.HORIZONTAL);
-                    break;
-                case CENTER:
-                default:
-                    display.setBillboard(Display.Billboard.CENTER);
-                    break;
+                case FIXED -> display.setBillboard(Display.Billboard.FIXED);
+                case VERTICAL -> display.setBillboard(Display.Billboard.VERTICAL);
+                case HORIZONTAL -> display.setBillboard(Display.Billboard.HORIZONTAL);
+                default -> display.setBillboard(Display.Billboard.CENTER);
             }
-            
+
             display.setSeeThrough(false);
 
+            // Background
             if (profileConfig.isBackgroundEnabled()) {
                 display.setBackgroundColor(org.bukkit.Color.fromARGB(
-                        (int)(profileConfig.getBackgroundOpacity() * 255),
+                        (int) (profileConfig.getBackgroundOpacity() * 255),
                         profileConfig.getBackgroundColor().getRed(),
                         profileConfig.getBackgroundColor().getGreen(),
                         profileConfig.getBackgroundColor().getBlue()
                 ));
             }
 
+            // Glow
             if (profileConfig.isGlowing()) {
                 display.setGlowing(true);
                 display.setGlowColorOverride(profileConfig.getGlowColor());
             }
 
-            // Настройка размера: если указаны scale-x/y/z, используем их, иначе общий size
+            // Scale
             float sx = profileConfig.getScaleX() > 0 ? (float) profileConfig.getScaleX() : (float) profileConfig.getSize();
             float sy = profileConfig.getScaleY() > 0 ? (float) profileConfig.getScaleY() : (float) profileConfig.getSize();
             float sz = profileConfig.getScaleZ() > 0 ? (float) profileConfig.getScaleZ() : (float) profileConfig.getSize();
-            
+
             display.setTransformation(new Transformation(
-                    new Vector3f(),
-                    new Quaternionf(),
-                    new Vector3f(sx, sy, sz),
-                    new Quaternionf()
+                    new Vector3f(), new Quaternionf(),
+                    new Vector3f(sx, sy, sz), new Quaternionf()
             ));
 
-            // Скрываем от всех, показываем только viewer
+            // Visibility
             display.setVisibleByDefault(false);
             viewer.showEntity(plugin, display);
 
             updateText();
-            
         } catch (Exception e) {
             plugin.getLogger().severe("Error creating hologram: " + e.getMessage());
             e.printStackTrace();
@@ -103,73 +85,57 @@ public class DisplayHologram {
     }
 
     private Location calculatePosition() {
-        Location targetLoc = target.getLocation().clone();
-        
-        // Для CUSTOM позиции — просто применяем offset относительно цели
-        if (profileConfig.getPosition() == ConfigManager.HologramPosition.CUSTOM) {
-            return targetLoc.clone()
-                    .add(profileConfig.getOffsetX(), profileConfig.getOffsetY(), profileConfig.getOffsetZ());
-        }
-        
-        // Направление от цели к viewer
-        Vector directionToViewer = viewer.getLocation().toVector()
-                .subtract(targetLoc.toVector())
-                .setY(0)
-                .normalize();
-        
-        if (directionToViewer.length() < 0.1) {
-            directionToViewer = targetLoc.getDirection().setY(0).normalize();
-        }
-        
-        Vector right = new Vector(-directionToViewer.getZ(), 0, directionToViewer.getX()).normalize();
-        
         Location baseLoc;
-        double dist = profileConfig.getDistance();
-        
-        switch (profileConfig.getPosition()) {
-            case FRONT:
-                baseLoc = targetLoc.clone().add(directionToViewer.clone().multiply(dist));
-                break;
-            case BACK:
-                baseLoc = targetLoc.clone().add(directionToViewer.clone().multiply(-dist));
-                break;
-            case LEFT:
-                baseLoc = targetLoc.clone().add(right.clone().multiply(-dist));
-                break;
-            case RIGHT:
-                baseLoc = targetLoc.clone().add(right.clone().multiply(dist));
-                break;
-            case BELOW:
-                baseLoc = targetLoc.clone().add(0, -dist, 0);
-                break;
-            case ABOVE_FRONT:
-                baseLoc = targetLoc.clone()
-                        .add(directionToViewer.clone().multiply(dist * 0.7))
-                        .add(0, profileConfig.getHeightOffset() + dist, 0);
-                break;
-            case ABOVE:
-            default:
-                baseLoc = targetLoc.clone().add(0, profileConfig.getHeightOffset() + dist, 0);
-                break;
+        boolean isViewerMode = profileConfig.getMode() == ConfigManager.HologramMode.VIEWER_FACE;
+        Location origin = isViewerMode ? viewer.getLocation().clone() : target.getLocation().clone();
+
+        if (profileConfig.getPosition() == ConfigManager.HologramPosition.CUSTOM) {
+            return origin.clone().add(profileConfig.getOffsetX(), profileConfig.getOffsetY(), profileConfig.getOffsetZ());
         }
-        
+
+        Vector direction;
+        if (isViewerMode) {
+            direction = origin.getDirection().setY(0).normalize();
+        } else {
+            direction = viewer.getLocation().toVector().subtract(origin.toVector()).setY(0).normalize();
+        }
+        if (direction.length() < 0.1) direction = origin.getDirection().setY(0).normalize();
+
+        Vector right = new Vector(-direction.getZ(), 0, direction.getX()).normalize();
+        double dist = profileConfig.getDistance();
+
+        switch (profileConfig.getPosition()) {
+            case FRONT -> baseLoc = origin.clone().add(direction.clone().multiply(dist));
+            case BACK -> baseLoc = origin.clone().add(direction.clone().multiply(-dist));
+            case LEFT -> baseLoc = origin.clone().add(right.clone().multiply(-dist));
+            case RIGHT -> baseLoc = origin.clone().add(right.clone().multiply(dist));
+            case BELOW -> baseLoc = origin.clone().add(0, -dist, 0);
+            case ABOVE_FRONT -> baseLoc = origin.clone()
+                    .add(direction.clone().multiply(dist * 0.7))
+                    .add(0, profileConfig.getHeightOffset() + dist, 0);
+            default -> baseLoc = origin.clone().add(0, profileConfig.getHeightOffset() + dist, 0);
+        }
+
         return baseLoc.add(profileConfig.getOffsetX(), profileConfig.getOffsetY(), profileConfig.getOffsetZ());
     }
 
     public void updateText() {
         if (display == null || !display.isValid()) return;
-
         try {
             StringBuilder text = new StringBuilder();
             for (String line : profileConfig.getLines()) {
                 String processed = PlaceholderAPI.setPlaceholders(target, line);
+                if (profileConfig.isShadowEnabled()) {
+                    processed = "<shadow:" + profileConfig.getShadowColor() + ":"
+                            + profileConfig.getShadowOffsetX() + ":"
+                            + profileConfig.getShadowOffsetY() + ">"
+                            + processed + "</shadow>";
+                }
                 text.append(processed).append("\n");
             }
-
             String finalText = text.toString().trim();
             if (!finalText.isEmpty()) {
-                Component component = MiniMessage.miniMessage().deserialize(finalText);
-                display.text(component);
+                display.text(MiniMessage.miniMessage().deserialize(finalText));
             }
         } catch (Exception e) {
             plugin.getLogger().warning("Error updating hologram text: " + e.getMessage());
@@ -177,16 +143,13 @@ public class DisplayHologram {
     }
 
     public void remove() {
-        if (display != null && display.isValid()) {
-            display.remove();
-        }
+        if (display != null && display.isValid()) display.remove();
     }
 
     public void updatePosition() {
         if (display != null && display.isValid() && target.isOnline() && viewer.isOnline()) {
             try {
-                Location loc = calculatePosition();
-                display.teleport(loc);
+                display.teleport(calculatePosition());
             } catch (Exception e) {
                 plugin.getLogger().warning("Error updating hologram position: " + e.getMessage());
             }
