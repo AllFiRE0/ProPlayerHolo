@@ -34,12 +34,16 @@ public class ConfigManager {
                         profilesSection.getString(key + ".name"),
                         profilesSection.getStringList(key + ".description"),
                         profilesSection.getDouble(key + ".display.size", 1.0),
+                        profilesSection.getDouble(key + ".display.scale-x", 0.0),
+                        profilesSection.getDouble(key + ".display.scale-y", 0.0),
+                        profilesSection.getDouble(key + ".display.scale-z", 0.0),
                         profilesSection.getString(key + ".display.position", "ABOVE"),
-                        profilesSection.getString(key + ".display.billboard", "VERTICAL"),
+                        profilesSection.getString(key + ".display.billboard", "CENTER"),
                         profilesSection.getDouble(key + ".display.height-offset", 0.5),
                         profilesSection.getDouble(key + ".display.offset-x", 0.0),
                         profilesSection.getDouble(key + ".display.offset-y", 0.0),
                         profilesSection.getDouble(key + ".display.offset-z", 0.0),
+                        profilesSection.getDouble(key + ".display.distance", 1.5),
                         profilesSection.getBoolean(key + ".background.enabled", true),
                         profilesSection.getDouble(key + ".background.opacity", 0.3),
                         profilesSection.getString(key + ".background.color", "#000000"),
@@ -95,14 +99,15 @@ public class ConfigManager {
         LEFT,
         RIGHT,
         BELOW,
-        ABOVE_FRONT
+        ABOVE_FRONT,
+        CUSTOM
     }
 
     public enum BillboardMode {
-        FIXED,      // Не поворачивается вообще
-        VERTICAL,   // Поворачивается только по вертикали (смотрит на viewer)
-        HORIZONTAL, // Поворачивается только по горизонтали
-        CENTER      // Всегда лицом к viewer
+        FIXED,
+        VERTICAL,
+        HORIZONTAL,
+        CENTER
     }
 
     public static class ProfileConfig {
@@ -111,12 +116,16 @@ public class ConfigManager {
         private final String name;
         private final List<String> description;
         private final double size;
+        private final double scaleX;
+        private final double scaleY;
+        private final double scaleZ;
         private final HologramPosition position;
         private final BillboardMode billboard;
         private final double heightOffset;
         private final double offsetX;
         private final double offsetY;
         private final double offsetZ;
+        private final double distance;
         private final boolean backgroundEnabled;
         private final double backgroundOpacity;
         private final String backgroundColor;
@@ -125,8 +134,9 @@ public class ConfigManager {
         private final List<String> lines;
 
         public ProfileConfig(String id, String permission, String name, List<String> description,
-                             double size, String position, String billboard, double heightOffset,
-                             double offsetX, double offsetY, double offsetZ,
+                             double size, double scaleX, double scaleY, double scaleZ,
+                             String position, String billboard, double heightOffset,
+                             double offsetX, double offsetY, double offsetZ, double distance,
                              boolean backgroundEnabled, double backgroundOpacity,
                              String backgroundColor, boolean glowing, String glowColor,
                              List<String> lines) {
@@ -135,12 +145,16 @@ public class ConfigManager {
             this.name = name;
             this.description = description;
             this.size = size;
+            this.scaleX = scaleX;
+            this.scaleY = scaleY;
+            this.scaleZ = scaleZ;
             this.position = parsePosition(position);
             this.billboard = parseBillboard(billboard);
             this.heightOffset = heightOffset;
             this.offsetX = offsetX;
             this.offsetY = offsetY;
             this.offsetZ = offsetZ;
+            this.distance = distance;
             this.backgroundEnabled = backgroundEnabled;
             this.backgroundOpacity = backgroundOpacity;
             this.backgroundColor = backgroundColor;
@@ -161,7 +175,7 @@ public class ConfigManager {
             try {
                 return BillboardMode.valueOf(mode.toUpperCase());
             } catch (IllegalArgumentException e) {
-                return BillboardMode.VERTICAL;
+                return BillboardMode.CENTER;
             }
         }
 
@@ -170,12 +184,16 @@ public class ConfigManager {
         public String getName() { return name; }
         public List<String> getDescription() { return description; }
         public double getSize() { return size; }
+        public double getScaleX() { return scaleX; }
+        public double getScaleY() { return scaleY; }
+        public double getScaleZ() { return scaleZ; }
         public HologramPosition getPosition() { return position; }
         public BillboardMode getBillboard() { return billboard; }
         public double getHeightOffset() { return heightOffset; }
         public double getOffsetX() { return offsetX; }
         public double getOffsetY() { return offsetY; }
         public double getOffsetZ() { return offsetZ; }
+        public double getDistance() { return distance; }
         public boolean isBackgroundEnabled() { return backgroundEnabled; }
         public double getBackgroundOpacity() { return backgroundOpacity; }
         public Color getBackgroundColor() {
