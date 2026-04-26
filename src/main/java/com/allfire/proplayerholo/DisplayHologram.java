@@ -44,7 +44,24 @@ public class DisplayHologram {
             }
 
             display.addScoreboardTag("pph_hologram");
-            display.setBillboard(Display.Billboard.CENTER);
+            
+            // Применяем billboard
+            switch (profileConfig.getBillboard()) {
+                case FIXED:
+                    display.setBillboard(Display.Billboard.FIXED);
+                    break;
+                case VERTICAL:
+                    display.setBillboard(Display.Billboard.VERTICAL);
+                    break;
+                case HORIZONTAL:
+                    display.setBillboard(Display.Billboard.HORIZONTAL);
+                    break;
+                case CENTER:
+                default:
+                    display.setBillboard(Display.Billboard.CENTER);
+                    break;
+            }
+            
             display.setSeeThrough(false);
 
             if (profileConfig.isBackgroundEnabled()) {
@@ -61,11 +78,15 @@ public class DisplayHologram {
                 display.setGlowColorOverride(profileConfig.getGlowColor());
             }
 
-            float scale = (float) profileConfig.getSize();
+            // Настройка размера: если указаны scale-x/y/z, используем их, иначе общий size
+            float sx = profileConfig.getScaleX() > 0 ? (float) profileConfig.getScaleX() : (float) profileConfig.getSize();
+            float sy = profileConfig.getScaleY() > 0 ? (float) profileConfig.getScaleY() : (float) profileConfig.getSize();
+            float sz = profileConfig.getScaleZ() > 0 ? (float) profileConfig.getScaleZ() : (float) profileConfig.getSize();
+            
             display.setTransformation(new Transformation(
                     new Vector3f(),
                     new Quaternionf(),
-                    new Vector3f(scale, scale, scale),
+                    new Vector3f(sx, sy, sz),
                     new Quaternionf()
             ));
 
@@ -84,51 +105,51 @@ public class DisplayHologram {
     private Location calculatePosition() {
         Location targetLoc = target.getLocation().clone();
         
-        // Направление от цели к viewer (игнорируем вертикаль)
+        // Для CUSTOM позиции — просто применяем offset относительно цели
+        if (profileConfig.getPosition() == ConfigManager.HologramPosition.CUSTOM) {
+            return targetLoc.clone()
+                    .add(profileConfig.getOffsetX(), profileConfig.getOffsetY(), profileConfig.getOffsetZ());
+        }
+        
+        // Направление от цели к viewer
         Vector directionToViewer = viewer.getLocation().toVector()
                 .subtract(targetLoc.toVector())
                 .setY(0)
                 .normalize();
         
-        // Если viewer слишком близко — используем направление взгляда цели
         if (directionToViewer.length() < 0.1) {
             directionToViewer = targetLoc.getDirection().setY(0).normalize();
         }
         
-        // Перпендикулярные векторы
         Vector right = new Vector(-directionToViewer.getZ(), 0, directionToViewer.getX()).normalize();
         
         Location baseLoc;
-        double distance = 1.5; // Базовая дистанция от цели
+        double dist = profileConfig.getDistance();
         
         switch (profileConfig.getPosition()) {
             case FRONT:
-                // Всегда между целью и viewer
-                baseLoc = targetLoc.clone().add(directionToViewer.clone().multiply(distance));
+                baseLoc = targetLoc.clone().add(directionToViewer.clone().multiply(dist));
                 break;
             case BACK:
-                // Всегда за целью относительно viewer
-                baseLoc = targetLoc.clone().add(directionToViewer.clone().multiply(-distance));
+                baseLoc = targetLoc.clone().add(directionToViewer.clone().multiply(-dist));
                 break;
             case LEFT:
-                // Всегда слева от цели (относительно viewer)
-                baseLoc = targetLoc.clone().add(right.clone().multiply(-distance));
+                baseLoc = targetLoc.clone().add(right.clone().multiply(-dist));
                 break;
             case RIGHT:
-                // Всегда справа от цели (относительно viewer)
-                baseLoc = targetLoc.clone().add(right.clone().multiply(distance));
+                baseLoc = targetLoc.clone().add(right.clone().multiply(dist));
                 break;
             case BELOW:
-                baseLoc = targetLoc.clone().add(0, -1.5, 0);
+                baseLoc = targetLoc.clone().add(0, -dist, 0);
                 break;
             case ABOVE_FRONT:
                 baseLoc = targetLoc.clone()
-                        .add(directionToViewer.clone().multiply(distance * 0.7))
-                        .add(0, profileConfig.getHeightOffset() + 1.5, 0);
+                        .add(directionToViewer.clone().multiply(dist * 0.7))
+                        .add(0, profileConfig.getHeightOffset() + dist, 0);
                 break;
             case ABOVE:
             default:
-                baseLoc = targetLoc.clone().add(0, profileConfig.getHeightOffset() + 2.0, 0);
+                baseLoc = targetLoc.clone().add(0, profileConfig.getHeightOffset() + dist, 0);
                 break;
         }
         
