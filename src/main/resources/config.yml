@@ -2,36 +2,26 @@
 # 
 # Позиции голограммы (position):
 #   ABOVE       - над головой цели
-#   FRONT       - перед лицом цели
-#   BACK        - за спиной цели
-#   LEFT        - слева от цели
-#   RIGHT       - справа от цели
+#   FRONT       - перед лицом цели (между целью и viewer)
+#   BACK        - за спиной цели (относительно viewer)
+#   LEFT        - слева от цели (относительно viewer)
+#   RIGHT       - справа от цели (относительно viewer)
 #   BELOW       - под ногами цели
 #   ABOVE_FRONT - спереди сверху
+#   CUSTOM      - полностью ручная настройка через offset
 #
-# Режимы отображения (billboard):
+# Billboard:
 #   FIXED      - зафиксирована, не поворачивается
 #   VERTICAL   - поворачивается только вверх/вниз
 #   HORIZONTAL - поворачивается только влево/вправо
 #   CENTER     - всегда лицом к зрителю
-#
-# Цвета указываются в формате MiniMessage:
-#   <red>, <green>, <blue>, <yellow>, <gold>, <aqua>,
-#   <light_purple>, <white>, <gray>, <dark_gray>, <black>,
-#   <dark_red>, <dark_green>, <dark_blue>
-#   Или HEX: <#FF5733>
 
 settings:
-  # Максимальное расстояние в блоках до цели
   max-distance: 15.0
-  # Чувствительность угла обзора (0.0 - 1.0, где 1.0 = смотреть точно на цель)
   view-angle: 0.95
-  # Интервал обновления в тиках (20 тиков = 1 секунда)
   update-interval: 10
-  # Если true - без права proplayerholo.use клик не срабатывает и не выводит сообщение
   silent-no-permission: true
 
-# Профили голограмм (можно добавлять бесконечно)
 profiles:
   basic:
     permission: "proplayerholo.profile.basic"
@@ -40,13 +30,24 @@ profiles:
       - "<gray>Самый простой профиль"
       - "<gray>Показывает основную информацию"
     display:
+      # Размер: общий множитель
       size: 1.0
+      # Детальная настройка размера по осям (переопределяет size если не 0)
+      scale-x: 0.0
+      scale-y: 0.0
+      scale-z: 0.0
+      # Позиция
       position: "ABOVE"
-      billboard: "VERTICAL"
-      height-offset: 0.5
+      # Детальные offset относительно позиции
       offset-x: 0.0
       offset-y: 0.0
       offset-z: 0.0
+      # Высота над базовой позицией
+      height-offset: 0.5
+      # Дистанция от цели (для FRONT/BACK/LEFT/RIGHT)
+      distance: 1.5
+      # Billboard
+      billboard: "CENTER"
     background:
       enabled: true
       opacity: 0.3
@@ -65,12 +66,16 @@ profiles:
       - "<gray>Показывает баланс и статистику"
     display:
       size: 1.1
+      scale-x: 0.0
+      scale-y: 0.0
+      scale-z: 0.0
       position: "ABOVE_FRONT"
-      billboard: "CENTER"
-      height-offset: 0.3
       offset-x: 0.0
       offset-y: 0.0
       offset-z: 0.0
+      height-offset: 0.3
+      distance: 1.2
+      billboard: "CENTER"
     background:
       enabled: true
       opacity: 0.4
@@ -91,12 +96,16 @@ profiles:
       - "<gray>Максимальная информация"
     display:
       size: 1.2
+      scale-x: 0.0
+      scale-y: 0.0
+      scale-z: 0.0
       position: "FRONT"
-      billboard: "FIXED"
-      height-offset: 1.0
       offset-x: 0.0
       offset-y: 0.0
       offset-z: 0.0
+      height-offset: 1.0
+      distance: 2.0
+      billboard: "CENTER"
     background:
       enabled: true
       opacity: 0.5
@@ -112,6 +121,37 @@ profiles:
       - "<gold>⚔ Убийств: <white>%statistic_player_kills%"
       - "<gray>💀 Смертей: <white>%statistic_deaths%"
 
+  custom_example:
+    permission: "proplayerholo.profile.admin"
+    name: "<blue>Кастомный"
+    description:
+      - "<gray>Пример ручной настройки"
+      - "<gray>Все параметры можно менять"
+    display:
+      size: 1.0
+      # Детальный размер только по высоте (вытянутая голограмма)
+      scale-x: 1.0
+      scale-y: 1.5
+      scale-z: 1.0
+      position: "CUSTOM"
+      # Ручное смещение: 2 блока вправо, 1 вверх, 3 вперёд от цели
+      offset-x: 2.0
+      offset-y: 1.0
+      offset-z: 3.0
+      height-offset: 0.0
+      distance: 0.0
+      billboard: "CENTER"
+    background:
+      enabled: true
+      opacity: 0.5
+      color: "#000033"
+      glowing: true
+      glow-color: "#4444FF"
+    lines:
+      - "<blue>🔧 <white>%player_name%"
+      - "<green>💰 Баланс: <white>%vault_eco_balance%"
+      - "<yellow>📍 XYZ: <white>%player_x% %player_y% %player_z%"
+
   admin:
     permission: "proplayerholo.profile.admin"
     name: "<red>Admin"
@@ -120,12 +160,16 @@ profiles:
       - "<gray>Показывает всю информацию"
     display:
       size: 1.3
+      scale-x: 0.0
+      scale-y: 0.0
+      scale-z: 0.0
       position: "ABOVE"
-      billboard: "VERTICAL"
-      height-offset: 0.5
       offset-x: 0.0
       offset-y: 0.0
       offset-z: 0.0
+      height-offset: 0.5
+      distance: 1.5
+      billboard: "CENTER"
     background:
       enabled: true
       opacity: 0.6
@@ -143,10 +187,8 @@ profiles:
       - "<light_purple>🌍 Мир: <white>%player_world%"
       - "<blue>🎯 XYZ: <white>%player_x% %player_y% %player_z%"
 
-# Профиль по умолчанию (если игрок не выбрал другой)
 default-profile: "basic"
 
-# Сообщения плагина (оставь "" чтобы не выводить)
 messages:
   no-permission: ""
   no-profile-permission: "<red>У вас нет доступа к профилю %profile%!"
