@@ -24,20 +24,13 @@ public class PlayerProfileManager {
     public ConfigManager.ProfileConfig getProfileConfig(Player player) {
         String profileId = getProfile(player);
         ConfigManager.ProfileConfig profile = configManager.getProfile(profileId);
-
-        if (profile == null) {
-            profile = configManager.getProfile(configManager.getDefaultProfile());
-        }
-
+        if (profile == null) profile = configManager.getProfile(configManager.getDefaultProfile());
         if (profile != null && !player.hasPermission(profile.getPermission())) {
             for (ConfigManager.ProfileConfig p : configManager.getAllProfiles()) {
-                if (player.hasPermission(p.getPermission())) {
-                    return p;
-                }
+                if (player.hasPermission(p.getPermission())) return p;
             }
             return configManager.getProfile(configManager.getDefaultProfile());
         }
-
         return profile;
     }
 
