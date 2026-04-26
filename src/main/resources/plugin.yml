@@ -3,35 +3,35 @@ version: 1.0.0
 main: com.allfire.proplayerholo.ProPlayerHolo
 api-version: '1.21'
 author: AllF1RE
-description: Display customizable player info holograms
+description: Customizable player info holograms with profiles
 depend:
   - PlaceholderAPI
 softdepend:
   - Vault
 commands:
   proplayerholo:
-    description: Управление плагином ProPlayerHolo
-    usage: /proplayerholo <reload|profile|list>
+    description: ProPlayerHolo main command
+    usage: /<command> <reload|profile|list>
     aliases: [pph, playerholo]
 permissions:
   proplayerholo.use:
-    description: Базовое право на использование плагина
+    description: Allows using the hologram display feature
     default: true
   proplayerholo.reload:
-    description: Право на перезагрузку конфига
+    description: Allows reloading the plugin config
     default: op
   proplayerholo.admin:
-    description: Административное право (доступ ко всем профилям)
+    description: Admin access to all profiles
     default: op
   proplayerholo.profile.basic:
-    description: Доступ к базовому профилю
+    description: Access to basic profile
     default: true
   proplayerholo.profile.vip:
-    description: Доступ к VIP профилю
+    description: Access to VIP profile
     default: op
   proplayerholo.profile.premium:
-    description: Доступ к премиум профилю
+    description: Access to Premium profile
     default: op
   proplayerholo.profile.admin:
-    description: Доступ к админ профилю
+    description: Access to Admin profile
     default: op
