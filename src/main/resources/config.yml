@@ -108,7 +108,7 @@ profiles:
     display:
       # Общий размер голограммы (множитель)
       # Используется если scale-x/y/z = 0
-      size: 1.0
+      size: 0.3
       # Индивидуальный размер по осям (переопределяет size если > 0)
       # scale-x = ширина (0 = использовать size)
       # scale-y = высота (0 = использовать size)
@@ -117,7 +117,7 @@ profiles:
       scale-y: 0.0
       scale-z: 0.0
       # Позиция относительно цели (или viewer для VIEWER_FACE)
-      position: "ABOVE"
+      position: "FRONT"
       # Billboard (поворот голограммы)
       billboard: "CENTER"
       # Дополнительное смещение по высоте (блоков)
@@ -127,11 +127,11 @@ profiles:
       # Применяется после расчета базовой позиции
       # Для CUSTOM позиции — это единственные координаты
       offset-x: 0.0  # Вправо (+), влево (-)
-      offset-y: 0.0  # Вверх (+), вниз (-)
+      offset-y: 0.5  # Вверх (+), вниз (-)
       offset-z: 0.0  # Вперёд (+), назад (-)
       # Дистанция от цели/игрока (блоков)
       # Для FRONT/BACK/LEFT/RIGHT/ABOVE_FRONT
-      distance: 1.5
+      distance: 0.9
     # Настройки тени текста (поддерживает MiniMessage)
     # Тень добавляется КАЖДОЙ строке автоматически
     text-shadow:
@@ -147,22 +147,29 @@ profiles:
       # Показывать ли фон
       enabled: true
       # Прозрачность фона (0.0 - полностью прозрачный, 1.0 - полностью непрозрачный)
-      opacity: 0.3
+      opacity: 0.0
       # Цвет фона в HEX
       color: "#000000"
       # Свечение голограммы (контур)
-      glowing: false
+      glowing: true
       # Цвет свечения в HEX
       glow-color: "#FFFFFF"
       # Интенсивность свечения (0-15, как у светящихся блоков)
       # 0 = стандартное свечение
       # 15 = максимальная яркость
-      glow-intensity: 0 
+      glow-intensity: 15
     # Строки голограммы (поддерживают PlaceholderAPI и MiniMessage)
     # Каждая строка применяется к цели (игроку, на которого нажали)
-    lines:
-      - "<gold>👤 <white>%player_name%"
-      - "<green>❤ <white>%player_health%"
+    lines: 
+      - "<light_purple>💎 <white>%player_name%"
+      - "<green>💰 Баланс: <white>%vault_eco_balance%&x&F&F&F&E&7&2⛂"
+      - "<blue>Коины:&f%playerpoints_points_shorthand%&x&C&D&A&A&7&0◎"
+      - "<red>❤ Здоровье: <white>%player_health%"
+      - "<aqua>📶 Пинг: <white>%player_ping%ms"
+      - "<yellow>⏱ Наиграно: <white>%statistic_time_played%"
+      - "<gold>⚔ Убийств: <white>%statistic_player_kills%"
+      - "<gray>💀 Смертей: <white>%statistic_deaths%"
+     
 
   # -------------------- VIP ПРОФИЛЬ --------------------
   vip:
@@ -217,7 +224,7 @@ profiles:
       scale-x: 0.0
       scale-y: 0.0
       scale-z: 0.0
-      position: "FRONT"
+      position: "ABOVE"
       billboard: "CENTER"
       height-offset: 1.0
       offset-x: 0.0
@@ -394,3 +401,4 @@ messages:
   display-off: ""
   # При перезагрузке конфига
   config-reloaded: "<green>✔ Конфигурация перезагружена!"
+  
