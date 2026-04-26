@@ -11,7 +11,7 @@
     <packaging>jar</packaging>
 
     <name>ProPlayerHolo</name>
-    <description>Display player info holograms with customizable profiles by AllF1RE</description>
+    <description>Customizable player info holograms by AllF1RE</description>
 
     <properties>
         <java.version>21</java.version>
@@ -61,8 +61,8 @@
                 <artifactId>maven-compiler-plugin</artifactId>
                 <version>3.11.0</version>
                 <configuration>
-                    <source>${java.version}</source>
-                    <target>${java.version}</target>
+                    <source>21</source>
+                    <target>21</target>
                 </configuration>
             </plugin>
             <plugin>
@@ -72,9 +72,7 @@
                 <executions>
                     <execution>
                         <phase>package</phase>
-                        <goals>
-                            <goal>shade</goal>
-                        </goals>
+                        <goals><goal>shade</goal></goals>
                     </execution>
                 </executions>
             </plugin>
