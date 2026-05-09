@@ -73,38 +73,76 @@ public class PlayerDisplayManager {
                     if (hologram == null) continue;
 
                     ConfigManager.ProfileConfig profile = profileManager.getProfileConfig(viewer);
+                    boolean isViewerFace = profile.getMode() == ConfigManager.HologramMode.VIEWER_FACE;
 
-                    if (profile.getMode() == ConfigManager.HologramMode.VIEWER_FACE) {
+                    // ──── Для VIEWER_FACE ────
+                    if (isViewerFace) {
+                        // Проверка только таймера
                         Long expireTime = viewerFaceTimers.get(viewer.getUniqueId());
                         if (expireTime != null && now > expireTime) {
                             removeDisplay(viewer);
                             continue;
                         }
+                        // Обновляем позицию (следует за головой viewer) и текст
                         hologram.updatePosition();
                         hologram.updateText();
-                    } else {
-                        if (viewer.getLocation().distance(target.getLocation()) > configManager.getMaxDistance()) {
-                            removeDisplay(viewer);
-                            continue;
-                        }
-                        if (!isLookingAt(viewer, target)) {
-                            removeDisplay(viewer);
-                            continue;
-                        }
-                        hologram.updatePosition();
-                        hologram.updateText();
+                        continue;
                     }
+
+                    // ──── Для TARGET_TRACKING ────
+                    // Проверка дистанции
+                    if (viewer.getLocation().distance(target.getLocation()) > configManager.getMaxDistance()) {
+                        removeDisplay(viewer);
+                        continue;
+                    }
+
+                    // Проверка взгляда с учётом разных ростов игроков
+                    if (!isLookingAt(viewer, target)) {
+                        removeDisplay(viewer);
+                        continue;
+                    }
+
+                    hologram.updatePosition();
+                    hologram.updateText();
                 }
             }
         }.runTaskTimer(plugin, 0L, configManager.getUpdateInterval());
     }
 
+    /**
+     * Проверяет, смотрит ли viewer на target.
+     * Учитывает разный рост игроков: проверяет взгляд на разные точки тела цели
+     * (ноги, центр, голова, чуть выше головы).
+     */
     private boolean isLookingAt(Player viewer, Player target) {
         Location eye = viewer.getEyeLocation();
-        Vector direction = eye.getDirection();
-        Vector toTarget = target.getLocation().add(0, 1, 0).toVector().subtract(eye.toVector());
-        double dot = direction.normalize().dot(toTarget.normalize());
-        return dot > configManager.getViewAngle();
+        Vector direction = eye.getDirection().normalize();
+
+        // Получаем рост цели
+        double targetHeight = target.getHeight();
+
+        // Проверяем несколько точек по вертикали цели:
+        double[] checkHeights = {
+                0.0,                    // ноги (для маленьких мобов/игроков)
+                targetHeight * 0.5,     // центр тела
+                targetHeight,           // голова
+                targetHeight + 0.5      // чуть выше (запас)
+        };
+
+        double bestDot = -2.0;
+
+        for (double heightOffset : checkHeights) {
+            Location targetPoint = target.getLocation().clone().add(0, heightOffset, 0);
+            Vector toTarget = targetPoint.toVector().subtract(eye.toVector());
+
+            // Если цель слишком близко — не проверяем угол
+            if (toTarget.length() < 0.5) return true;
+
+            double dot = direction.dot(toTarget.normalize());
+            if (dot > bestDot) bestDot = dot;
+        }
+
+        return bestDot > configManager.getViewAngle();
     }
 
     public void cleanup() {
