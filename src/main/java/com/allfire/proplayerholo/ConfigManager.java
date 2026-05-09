@@ -37,6 +37,7 @@ public class ConfigManager {
                 String shadowColor = p.getString("text-shadow.color", "#000000");
                 int shadowOffsetX = p.getInt("text-shadow.offset-x", 1);
                 int shadowOffsetY = p.getInt("text-shadow.offset-y", 1);
+                double shadowOpacity = Math.clamp(p.getDouble("text-shadow.opacity", 1.0), 0.0, 1.0);
 
                 ProfileConfig profile = new ProfileConfig(
                         key,
@@ -56,7 +57,7 @@ public class ConfigManager {
                         p.getDouble("display.offset-y", 0.0),
                         p.getDouble("display.offset-z", 0.0),
                         p.getDouble("display.distance", 1.5),
-                        shadowEnabled, shadowColor, shadowOffsetX, shadowOffsetY,
+                        shadowEnabled, shadowColor, shadowOffsetX, shadowOffsetY, shadowOpacity,
                         p.getBoolean("background.enabled", true),
                         p.getDouble("background.opacity", 0.3),
                         p.getString("background.color", "#000000"),
@@ -135,6 +136,7 @@ public class ConfigManager {
         private final boolean shadowEnabled;
         private final String shadowColor;
         private final int shadowOffsetX, shadowOffsetY;
+        private final double shadowOpacity;
         private final boolean backgroundEnabled;
         private final double backgroundOpacity;
         private final String backgroundColor;
@@ -148,6 +150,7 @@ public class ConfigManager {
                              String position, String billboard, double heightOffset,
                              double offsetX, double offsetY, double offsetZ, double distance,
                              boolean shadowEnabled, String shadowColor, int shadowOffsetX, int shadowOffsetY,
+                             double shadowOpacity,
                              boolean backgroundEnabled, double backgroundOpacity, String backgroundColor,
                              boolean glowing, String glowColor, int glowIntensity, List<String> lines) {
             this.id = id;
@@ -171,6 +174,7 @@ public class ConfigManager {
             this.shadowColor = shadowColor;
             this.shadowOffsetX = shadowOffsetX;
             this.shadowOffsetY = shadowOffsetY;
+            this.shadowOpacity = shadowOpacity;
             this.backgroundEnabled = backgroundEnabled;
             this.backgroundOpacity = backgroundOpacity;
             this.backgroundColor = backgroundColor;
@@ -217,6 +221,7 @@ public class ConfigManager {
         public String getShadowColor() { return shadowColor; }
         public int getShadowOffsetX() { return shadowOffsetX; }
         public int getShadowOffsetY() { return shadowOffsetY; }
+        public double getShadowOpacity() { return shadowOpacity; }
         public boolean isBackgroundEnabled() { return backgroundEnabled; }
         public double getBackgroundOpacity() { return backgroundOpacity; }
         public Color getBackgroundColor() {
