@@ -1,9 +1,10 @@
 package com.allfire.proplayerholo;
 
+import com.allfire.proplayerholo.util.ColorConverter;
 import me.clip.placeholderapi.PlaceholderAPI;
-import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.minimessage.MiniMessage;
 import org.bukkit.Location;
+import org.bukkit.World;
 import org.bukkit.entity.Display;
 import org.bukkit.entity.Player;
 import org.bukkit.entity.TextDisplay;
@@ -30,9 +31,14 @@ public class DisplayHologram {
     public void create() {
         try {
             Location loc = calculatePosition();
-            if (target.getWorld() == null) return;
 
-            display = target.getWorld().spawn(loc, TextDisplay.class);
+            // Для VIEWER_FACE голограмма должна быть в мире viewer (не target!)
+            boolean isViewerMode = profileConfig.getMode() == ConfigManager.HologramMode.VIEWER_FACE;
+            World world = isViewerMode ? viewer.getWorld() : target.getWorld();
+
+            if (world == null) return;
+
+            display = world.spawn(loc, TextDisplay.class);
             if (display == null) return;
 
             display.addScoreboardTag("pph_hologram");
@@ -124,12 +130,21 @@ public class DisplayHologram {
         try {
             StringBuilder text = new StringBuilder();
             for (String line : profileConfig.getLines()) {
+                // Шаг 1: применяем PlaceholderAPI
                 String processed = PlaceholderAPI.setPlaceholders(target, line);
+
+                // Шаг 2: конвертируем ВСЕ возможные форматы в MiniMessage
+                processed = ColorConverter.toMiniMessage(processed);
+
+                // Шаг 3: добавляем shadow с поддержкой прозрачности
                 if (profileConfig.isShadowEnabled()) {
-                    processed = "<shadow:" + profileConfig.getShadowColor() + ":"
-                            + profileConfig.getShadowOffsetX() + ":"
-                            + profileConfig.getShadowOffsetY() + ">"
-                            + processed + "</shadow>";
+                    processed = ColorConverter.wrapWithShadow(
+                            processed,
+                            profileConfig.getShadowColor(),
+                            profileConfig.getShadowOffsetX(),
+                            profileConfig.getShadowOffsetY(),
+                            profileConfig.getShadowOpacity()
+                    );
                 }
                 text.append(processed).append("\n");
             }
@@ -139,6 +154,30 @@ public class DisplayHologram {
             }
         } catch (Exception e) {
             plugin.getLogger().warning("Error updating hologram text: " + e.getMessage());
+            // Fallback: показываем сырой текст без форматирования
+            showFallbackText();
+        }
+    }
+
+    private void showFallbackText() {
+        try {
+            StringBuilder fallback = new StringBuilder();
+            for (String line : profileConfig.getLines()) {
+                String processed = PlaceholderAPI.setPlaceholders(target, line);
+                // Убираем все возможные теги и коды
+                processed = processed.replaceAll("<[^>]+>", "")
+                        .replaceAll("&[0-9a-fA-Fk-oK-OrR]", "")
+                        .replaceAll("§[0-9a-fA-Fk-oK-OrR]", "")
+                        .replaceAll("&#[0-9a-fA-F]{6}", "")
+                        .replaceAll("\\{#([0-9a-fA-F]{6})[<>}]?\\}", "");
+                fallback.append(processed).append("\n");
+            }
+            String fallbackStr = fallback.toString().trim();
+            if (!fallbackStr.isEmpty()) {
+                display.text(MiniMessage.miniMessage().deserialize(fallbackStr));
+            }
+        } catch (Exception ex) {
+            plugin.getLogger().severe("Critical error rendering hologram fallback: " + ex.getMessage());
         }
     }
 
